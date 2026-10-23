@@ -1,50 +1,26 @@
-# compile src/ programmes
-
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g -std=c11
 BFS = basefs
-B = base
 
-all: copy compile bash coreutils
-
-copy:
-	cp -r $(B) $(BFS)
-	find $(BFS) -type f -name ".gitkeep" -delete
-
-# all src/* goes here
-compile: src/testprogram.c
-	$(CC) $(CFLAGS) src/testprogram.c -o basefs/bin/testprogram
+make:
+	@echo "THIS FILE SHOULD NOT BE EXECUTED!"
+	@echo "Please read the README to understand the build process."
+	@echo ""
+	@echo "This file is to be used by build.sh, to compile components at the correct time during the build process."
+	@echo "Running any targets inside of this file outside of the automated build script will break your build!"
+	@echo "INSTEAD, run \`./build.sh\`"
 
 
-# gets and installs bash !!!!!!!!
-bash: copy
-	mkdir -p bash
-	wget -nc -P bash https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
-	tar -xf bash/bash-5.3.tar.gz -C bash
 
+init:
+	$(CC) $(CFLAGS) -c src/init/init.c -o src/init/init.o
+	$(CC) $(CFLAGS) -c src/init/additional.c src/init/additional.o
+	$(CC) $(CFLAGS) src/init/init.o src/init/init.c -o basefs/init
 
-# gets and installs gnu coreutils
-coreutils: copy
-	mkdir -p cu
-	wget -nc -P cu https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
-	tar -xf cu/coreutils-9.12.tar.xz -C cu
-	
-	cd cu/coreutils-9.12 && ./configure --prefix=$$(cd ../../$(BFS) && pwd) \
-										--bindir=$$(cd ../../$(BFS) && pwd)/usr/bin \
-										--sbindir=$$(cd ../../$(BFS) && pwd)/usr/sbin \
-										--libdir=$$(cd ../../$(BFS) && pwd)/usr/lib
-	cd cu/coreutils-9.12 && make -j$$(nproc)
-	cd cu/coreutils-9.12 && make install
-
-
-# setup etc files
-etc: copy
-	echo "root:x:0:0:root:/root:/bin/sh"
-
+src:
+	$(CC) $(CFLAGS) src/ferninstall/ferninstall.c -o $(BFS)/bin/ferninstall
+	$(CC) $(CFLAGS) src/testprogramme.c -o $(BFS)/bin/testprogramme
 
 clean:
-	rm -rf $(BFS)
-	rm -rf bash
-	rm -rf cu
-
-.PHONY: all start bash coreutils etc clean
+	rm -rf basefs bash cu kernel grub
+	find . -type f -name "*.o" -delete
