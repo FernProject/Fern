@@ -1,3 +1,6 @@
+*.o
+
 basefs
 bash
 cu
+kernel
