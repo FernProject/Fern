@@ -7,7 +7,6 @@
 
 #define pathmax 256
 
-void trim(char* out, const char* in);
 void rconf(char* path);
 
 #endif

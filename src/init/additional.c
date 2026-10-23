@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-void trim(char* out, const char* in) {
+static void trim(char* out, const char* in) {
 	while (isspace((unsigned char)*in)) in++;
 	size_t len = strlen(in);
 	while (len > 0 && isspace((unsigned char)in[len - 1])) len--;
