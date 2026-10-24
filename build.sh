@@ -10,19 +10,101 @@ BFS="basefs"
 BU="build"
 WS=$(pwd)
 
-
-echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
-exit 0
+#echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
+#exit 0
 
 # copy base
 rm -rf "$BFS"
 cp -r "$B" "$BFS"
 find "$BFS" -type f -name ".gitkeep" -delete
 
+
+# kernel headers
+if [ ! -f "$WS/$BU/linux-7.2.12" ]; then
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.12.tar.xz
+	tar -xf "$WS/$BU/linux-7.2.12.tar.xz" -C "$WS/$BU"
+fi
+cd "$WS/$BU/linux-7.2.12"
+make mrproper
+make INSTALL_HDR_PATH="$WS/$BFS/usr" headers_install
+cd "$WS"
+
+# glibc
+if [ ! -f "$WS/$BU/glibc-2.44" ]; then
+	echo "downloading Glibc..."
+	mkdir -p "$WS/$BU"
+	mkdir -p "$WS/$BU/glibc-build" # mk separate build dir
+	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/glibc/glibc-2.44.tar.xz
+	tar -xf "$BU/glibc-2.44.tar.xz" -C "$WS/$BU"
+	cd "$WS/$BU/glibc-build"
+	
+	../glibc-2.44/configure --prefix="$WS/$BFS" \
+							--bindir="$WS/$BFS/usr/bin" \
+							--sbindir="$WS/$BFS/usr/sbin" \
+							--libdir="$WS/$BFS/usr/lib" \
+							--libexecdir="$WS/$BFS/usr/libexec" \
+							--with-headers="$WS/$BFS/usr/include" \
+							lib_cv_slibdir="$WS/$BFS/usr/lib" \
+							lib_cv_rtlddir="$WS/$BFS/usr/lib"
+	make -j$(nproc)
+fi
+cd "$WS/$BU/glibc-build"
+make install
+cd "$WS"
+
+
+
+# coreutils
+if [ ! -f "$WS/$BU/coreutils-9.12" ]; then
+	echo "downloading Coreutils..."
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
+	tar -xf "$BU/coreutils-9.12.tar.xz" -C "$WS/$BU"
+	cd "$WS/$BU/coreutils-9.12"
+	./configure --prefix="$WS/$BFS" \
+				--bindir="$WS/$BFS/usr/bin" \
+				--sbindir="$WS/$BFS/usr/sbin" \
+				--libdir="$WS/$BFS/usr/lib" \
+				--libexecdir="$WS/$BFS/usr/libexec"
+	make -j$(nproc)
+fi
+cd "$WS/$BU/coreutils-9.12"
+make install
+cd "$WS"
+rm -rf "$WS/$BFS/libexec" "$WS/$BFS/share"
+
+# bash
+# dont redownload if alr exists
+if [ ! -f "$WS/$BU/bash-5.3" ]; then
+	echo "downloading Bash 5.3..."
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
+	tar -xf "$WS/$BU/bash-5.3.tar.gz" -C "$WS/$BU"
+	cd "$WS/$BU/bash-5.3"
+	./configure --prefix="$WS/$BFS" --bindir="$WS/$BFS/usr/bin"
+	make -j$(nproc)
+fi
+cd "$WS/$BU/bash-5.3"
+make install
+cd "$WS/$BFS/bin"
+ln -sf bash sh
+cd "$WS"
+rm -rf "$BFS/include" "$BFS/share"
+
 # compile src
 echo "compiling src/*"
 cd "$WS"
 make src
+
+
+# kernel
+cd "$WS/$BU/linux-7.2.12"
+make defconfig
+make -j$(nproc)
+make INSTALL_MOD_PATH="$WS/$BFS" modules_install
+cp "$WS/$BU/linux-7.2.12/arch/x86/boot/bzImage" "$WS/$BFS/boot/vmlinuz"
+
 
 # init
 echo "compiling init"
@@ -39,46 +121,9 @@ SHELL=/bin/bash # installed with Fern
 # SHELL=/bin/zsh
 EOF
 
-# bash
-# dont redownload if alr exists
-if [ ! -f "$BU/bash-5.3" ]; then
-	echo "downloading Bash 5.3..."
-	mkdir -p "$WS/$BU"
-	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
-	tar -xf "$WS/$BU/bash-5.3.tar.gz" -C "$WS/$BU"
-	cd "$WS/$BU/bash-5.3"
-	./configure --prefix="$WS/$BFS" --bindir="$WS/$BFS/usr/bin"
-	make -j$(nproc)
-fi
-
-# always reinstall
-cd "$WS/$BU/bash-5.3"
-make install
-cd "$WS/$BFS/bin"
-ln -sf bash sh
-cd "$WS"
-rm -rf "$BFS/include" "$BFS/share"
 
 
-# coreutils
-if [ ! -f "$BU/coreutils-9.12" ]; then
-	echo "download Coreutils..."
-	mkdir -p "$WS/$BU"
-	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
-	tar -xf "$BU/coreutils-9.12.tar.xz" -C "$WS/$BU"
-	cd "$WS/$BU/coreutils-9.12"
-	./configure --prefix="$WS/$BFS" \
-				--bindir="$WS/$BFS/usr/bin" \
-				--sbindir="$WS/$BFS/usr/sbin" \
-				--libdir="$WS/$BFS/usr/lib"
-	make -j$(nproc)
-fi
-
-cd "$WS/$BU/coreutils-9.12"
-make install
-cd "$WS"
-rm -rf "$WS/$BFS/libexec" "$WS/$BFS/share"
-
+# etc
 echo "Writing /etc files"
 echo "/etc/passwd"
 cat << EOF > "$WS/$BFS/etc/passwd"
@@ -113,3 +158,5 @@ none		/proc		proc	defaults		0	0
 none		/sys		sysfs	defaults		0	0
 none		/run		tmpfs	defaults,mode=0755	0	0
 none		/dev/pts	devpts	defaults		0	0
+EOF
+
