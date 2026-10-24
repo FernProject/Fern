@@ -160,3 +160,22 @@ none		/run		tmpfs	defaults,mode=0755	0	0
 none		/dev/pts	devpts	defaults		0	0
 EOF
 
+echo "Network config"
+printf "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n" > "$WS/$BFS/etc/hosts"
+# echo "nameserver 0.0.0.0" > "$WS/$BFS/etc/resolv.conf"
+echo "Fern" > "$WS/$BFS/etc/hostname"
+
+echo "/etc/profile"
+cat << 'EOF' > "$WS/$BFS/etc/profile"
+export PATH=/usr/bin:/usr/sbin:/bin:/sbin
+
+if [ "$USER" = "root" ]; then
+    export PS1='\u@fernos:\w\# '
+else
+    export PS1='\u@fernos:\w\$ '
+fi
+
+export USER=$(id -un)
+export LOGNAME=$USER
+export HOME=/root
+EOF
