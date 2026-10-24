@@ -1,7 +1,4 @@
 *.o
 
-basefs
-bash
-cu
-kernel
-makefileold
+.a
+build
