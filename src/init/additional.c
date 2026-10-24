@@ -30,10 +30,18 @@ void rconf(char* path) {
 
 	char line[512];
 	while (fgets(line, sizeof(line), file)) {
-		// skip comment or empty
-		if (line[0] == '#' || line[0] == '\n'|| line[0] == '\r') continue;
+		// skip comment or empty ln
+		char* comment = strchr(line, '#');
+		if (comment != NULL) {
+			*comment = '\0';
+		}
+		
+		// find first non whitespace
+		char* start = line;
+		while (isspace((unsigned char)*start)) start++;
+		if (*start  == '\0') continue;
 
-		char* split = strchr(line, '=');
+		char* split = strchr(start, '=');
 		if (split != NULL) {
 			*split = '\0';
 
