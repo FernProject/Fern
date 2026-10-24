@@ -8,6 +8,7 @@
 #include <sys/mount.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 
 #include "additional.h"
@@ -31,7 +32,7 @@ int main() {
 	if (mount("none", "/dev", "devtmpfs", MS_NOSUID | MS_NOEXEC, NULL) < 0) perror(ERRP "Couldn't mount /dev");
 	mkdir("/dev/pts", 0755);
 	if (mount("none", "/dev/pts", "devpts", MS_NOSUID | MS_NOEXEC, NULL) < 0) perror(ERRP "Couldn't mount /dev/pts");
-	if (mount("none", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) < 0) perror(ERRP "Couldn't mount /run");
+	if (mount("none", "/run", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOEXEC, "mode=0755") < 0) perror(ERRP "Couldn't mount /run");
 	
 	struct stat efi_stat;
 	if (stat("/sys/firmware/efi/efivars", &efi_stat) == 0) {
@@ -53,6 +54,10 @@ int main() {
 
 	if (pid < 0) perror(ERRP "Couldn't fork shell");
 	else if (pid == 0) {
+		// session leadership
+		setsid();
+		ioctl(0, TIOSCTTY, 1);
+
 		char* args[] = { sshell, NULL };
 		execv(args[0], args);
 
@@ -73,6 +78,8 @@ int main() {
 					printf(ERRP "Shell crashed! :( ... Respawning %s...\n", sshell);
 					pid = fork();
 					if (pid == 0) {
+						setsid();
+						ioctl(0, TIOSCTTY, 1);
 						char* args[] = { sshell, NULL };
 						execv(args[0], args);
 						exit(1);
