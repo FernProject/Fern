@@ -1,3 +1,12 @@
+# so, i realise i need to make a few changes to things before this can become an iso:
+#
+# - move kernel into an iso build dir
+# - install grub into iso build dir
+# - pack basefs into initramfs
+# - THEN make iso
+#
+# will do tomorrow :)
+
 #!/bin/bash
 set -e
 
@@ -162,7 +171,14 @@ EOF
 
 echo "Network config"
 printf "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n" > "$WS/$BFS/etc/hosts"
-# echo "nameserver 0.0.0.0" > "$WS/$BFS/etc/resolv.conf"
+
+# get host nameserver
+HOST_NS=$(awk '/nameserver/ {print $2; exit}' /etc/resolv.conf)
+# fallback
+if [ -z "$HOST_NS" ]; then
+	HOST_NS="1.1.1.1"
+fi
+echo "nameserver $HOST_NS" > "$WS/$BFS/etc/resolv.conf"
 echo "Fern" > "$WS/$BFS/etc/hostname"
 
 echo "/etc/profile"
@@ -179,3 +195,12 @@ export USER=$(id -un)
 export LOGNAME=$USER
 export HOME=/root
 EOF
+
+# need to make work for uefi and legacy
+# grub bootloader
+#if [ ! -f "$WS/$BU/grub-2.14" ]; then
+#	echo "downloading GRUB"
+#	mkdir -p "$WS/$BU"
+#	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
+#	tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
+#	mkdir -p "$WS/$BFS/boot/grub"
