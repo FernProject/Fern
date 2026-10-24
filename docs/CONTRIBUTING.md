@@ -1,4 +1,4 @@
-# Pull Requests
+# Contributing
 
 Fern was initially made by one person (me - along with all the GNU and Linux contributors). This means, it's development will be very slow if there's just one person working on it, updates, and patches will be very slow. That's where open source is a real saviour. If you can see Fern becoming something real, why not be a part of that? With contributors help, I believe this operating system can become great, and maybe get some real recognition.
 
