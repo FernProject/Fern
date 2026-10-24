@@ -10,8 +10,8 @@ BFS="basefs"
 BU="build"
 WS=$(pwd)
 
-#echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
-#exit 0
+echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
+exit 0
 
 # copy base
 rm -rf "$BFS"
