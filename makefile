@@ -1,5 +1,8 @@
+# IN PROCESS OF COMPLETING!
+
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g -std=c11
+B = base
 BFS = basefs
 
 make:
@@ -10,17 +13,23 @@ make:
 	@echo "Running any targets inside of this file outside of the automated build script will break your build!"
 	@echo "INSTEAD, run \`./build.sh\`"
 
-
+# DO NOT USE THIS TARGET
+copy:
+	cp -r $(B) $(BFS)
+	find $(BFS) -type f -name ".gitkeep" -delete
+	cd $(BFS)/bin && ln -sf bash sh
 
 init:
 	$(CC) $(CFLAGS) -c src/init/init.c -o src/init/init.o
-	$(CC) $(CFLAGS) -c src/init/additional.c src/init/additional.o
-	$(CC) $(CFLAGS) src/init/init.o src/init/init.c -o basefs/init
+	$(CC) $(CFLAGS) -c src/init/additional.c -o src/init/additional.o
+	$(CC) $(CFLAGS) src/init/init.o src/init/additional.o -o $(BFS)/init
 
 src:
 	$(CC) $(CFLAGS) src/ferninstall/ferninstall.c -o $(BFS)/bin/ferninstall
 	$(CC) $(CFLAGS) src/testprogramme.c -o $(BFS)/bin/testprogramme
 
 clean:
-	rm -rf basefs bash cu kernel grub
+	rm -rf basefs build
 	find . -type f -name "*.o" -delete
+
+.PHONY: make copy init src clean
