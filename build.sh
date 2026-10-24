@@ -78,3 +78,38 @@ cd "$WS/$BU/coreutils-9.12"
 make install
 cd "$WS"
 rm -rf "$WS/$BFS/libexec" "$WS/$BFS/share"
+
+echo "Writing /etc files"
+echo "/etc/passwd"
+cat << EOF > "$WS/$BFS/etc/passwd"
+root:x:0:0:root:/root:/bin/sh
+$USER:x:1000:1000:$USER:/bin/sh
+bin:x:1:1:bin:/bin/false
+daemon:x:2:2:daemon:/sbin:/bin/false
+nobody:x:65534:65534:nobody:/bin:/bin/false
+EOF
+
+echo "/etc/shadow"
+cat << EOF > "$WS/$BFS/etc/shadow"
+root:$(openssl passwd -6 "$ROOT"):19000:0:99999:7:::
+$USER:$(openssl passwd -6  "$PASSWD"):19000:0:99999:7:::
+EOF
+
+echo "/etc/group"
+cat << EOF > "$WS/$BFS/etc/group"
+root:x:0:root
+$USER:x:1000:
+bin:x:1:bin
+daemon:x:2:daemon
+sys:x:3:
+tty:x:5:
+nobody:x:65534
+EOF
+
+echo "/etc/fstab"
+cat << EOF > "$WS/$BFS/etc/fstab
+#<fs> 		<mount pt> 	<type> <options> 	<dump> <pass>
+none		/proc		proc	defaults		0	0
+none		/sys		sysfs	defaults		0	0
+none		/run		tmpfs	defaults,mode=0755	0	0
+none		/dev/pts	devpts	defaults		0	0
