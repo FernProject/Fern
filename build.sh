@@ -161,7 +161,7 @@ nobody:x:65534
 EOF
 
 echo "/etc/fstab"
-cat << EOF > "$WS/$BFS/etc/fstab
+cat << EOF > "$WS/$BFS/etc/fstab"
 #<fs> 		<mount pt> 	<type> <options> 	<dump> <pass>
 none		/proc		proc	defaults		0	0
 none		/sys		sysfs	defaults		0	0
