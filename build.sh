@@ -16,6 +16,10 @@ cp -r "$B" "$BFS"
 find "$BFS" -type f -name ".gitkeep" -delete
 
 
+# make iso build dir for later
+mkdir -p "$WS/$BU/img"
+
+
 # kernel headers
 if [ ! -f "$WS/$BU/linux-7.2.12" ]; then
 	mkdir -p "$WS/$BU"
@@ -118,7 +122,7 @@ cd "$WS/$BU/linux-7.2.12"
 make defconfig
 make -j$(nproc)
 make INSTALL_MOD_PATH="$WS/$BFS" modules_install
-cp "$WS/$BU/linux-7.2.12/arch/x86/boot/bzImage" "$WS/$BFS/boot/vmlinuz"
+cp "$WS/$BU/linux-7.2.12/arch/x86/boot/bzImage" "$WS/$BU/img/vmlinuz" # install to iso build dir
 
 
 # init
@@ -202,22 +206,23 @@ export LOGNAME=$USER
 export HOME=/root
 EOF
 
+
+# tbh i found the whole grub part confusing with initramfs - probably isnt perfect
 # grub bootloader
 echo "downloading GRUB"
 mkdir -p "$WS/$BU"
 wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
 tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
-mkdir -p "$WS/$BFS/boot/grub"
 mkdir -p "$WS/$BU/build-bios"
 mkdir -p "$WS/$BU/build-uefi"
 
 # grub for bios
 cd "$WS/$BU/build-bios"
-../grub-2.14/configure --prefix="$WS/$BFS" \
-						--bindir="$WS/$BFS/usr/bin" \
-						--sbindir="$WS/$BFS/usr/sbin" \
-						--libdir="$WS/$BFS/usr/lib" \
-						--sysconfdir="$WS/$BFS/etc" \
+# using root dirs because DESTDIR will correct it
+../grub-2.14/configure --prefix="/usr" \
+						--bindir="/usr/bin" \
+						--sbindir="/usr/sbin" \
+						--sysconfdir="/etc" \
 						--with-platform=pc \
 						--target=i386 \
 						--disable-werror
@@ -226,11 +231,10 @@ make install DESTDIR="$WS/$BFS"
 
 # grub for uefi
 cd "$WS/$BU/build-uefi"
-../grub-2.14/configure --prefix="$WS/$BFS" \
-						--bindir="$WS/$BFS/usr/bin" \
-						--sbindir="$WS/$BFS/usr/sbin" \
-						--libdir="$WS/$BFS/usr/lib" \
-						--sysconfdir="$WS/$BFS/etc" \
+../grub-2.14/configure --prefix="/usr" \
+						--bindir="/usr/bin" \
+						--sbindir="/usr/sbin" \
+						--sysconfdir="/etc" \
 						--with-platform=efi \
 						--target=x86_64 \
 						--disable-werror
@@ -240,13 +244,55 @@ make install DESTDIR="$WS/$BFS"
 cd "$WS"
 rm -rf "$WS/$BFS/usr/share/info"
 
+
+# make img ----
+read -p "Writing ISO, continue? [Y/n]: " continue
+case "$continue" in
+	[nN][oO]|[nN])
+		echo "Quit. Please note, build is incomplete. All components are inside basefs, excluding:"
+		echo "    * Linux | build/img/vmlinuz"
+		echo "    * GRUB cfg file | not written"
+		exit 1
+		;;
+	*)
+esac
+
+mkdir -p "$WS/$BU/img/boot/grub"
+mkdir -p "$WS/$BU/iso"
+
 # write conf file
-cat << EOF > "$WS/$BFS/boot/grub/grub.cfg"
+cat << EOF > "$WS/$BU/img/boot/grub/grub.cfg"
 # Hi!
 set timeout=5
 set default=0
 
-menuentry "Fern Live Media" {
-	linux /boot/vmlinuz root=/dev/ram0 rw init=/init
+menuentry "Fern Live Media (RAM)" {
+	linux /vmlinuz root=/dev/ram0 rw init=/init
+	initrd /initramfs.cpio.gz
 }
 EOF
+
+# basefs -> initramfs
+echo "making initramfs"
+cd "$WS/$BFS"
+find . -print0 | cpio --null -ov --format=newc | gzip -9 > "$WS/$BU/img/initramfs.cpio.gz"
+cd "$WS"
+
+echo "making eltorito img file"
+"$WS/$BFS/usr/bin/grub-mkimage" \
+	-d "$WS/$BFS/usr/lib/grub/i386-pc" \
+	-O i386-pc \
+	-o "$WS/$BU/img/boot/grub/eltorito.img" \
+	-p "/boot/grub" biosdisk iso9660 ext2 memdisk search test normal
+
+echo "building"
+xorriso -as mkisofs \
+	-iso-level 3 \
+	-full-iso9660-filenames \
+	-volid "FernOS_live" \
+	-eltorito-boot boot/grub/eltorito.img \
+	-no-emul-boot -boot-load-size 4 -boot-info-table \
+	-output "$WS/$BU/iso/fernos_live.iso" \
+	"$WS/$BU/img"
+
+echo "finished"
