@@ -49,6 +49,7 @@ int main() {
 
 	// run bash - or whichever shell u want
 	printf(INITP "Starting shell...\n");
+	printf("\n" INITP "Welcome to Fern!\n")
 
 	pid_t pid = fork();
 
