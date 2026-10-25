@@ -1,12 +1,3 @@
-# so, i realise i need to make a few changes to things before this can become an iso:
-#
-# - move kernel into an iso build dir
-# - install grub into iso build dir
-# - pack basefs into initramfs
-# - THEN make iso
-#
-# will do tomorrow :)
-
 #!/bin/bash
 set -e
 
@@ -18,9 +9,6 @@ B="base"
 BFS="basefs"
 BU="build"
 WS=$(pwd)
-
-#echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
-#exit 0
 
 # copy base
 rm -rf "$BFS" "$BU"
