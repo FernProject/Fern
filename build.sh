@@ -88,6 +88,25 @@ ln -sf bash sh
 cd "$WS"
 rm -rf "$BFS/include" "$BFS/share"
 
+# util linux
+if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
+	echo "downloading util-linux"
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
+	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
+	cd "$WS/$BU/util-linux-2.42.4"
+	./configure --prefix="$WS/$BFS" \
+				--bindir="$WS/$BFS/usr/bin" \
+				--sbindir="$WS/$BFS/usr/sbin" \
+				--libdir="$WS/$BFS/usr/lib" \
+				--disable-makeinstall-chown \
+				--disable-makeinstall-setuid
+	make -j$(nproc)
+fi
+cd "$WS/$BU/util-linux-2.42.4"
+make install
+cd "$WS"
+
 # compile src
 echo "compiling src/*"
 cd "$WS"
