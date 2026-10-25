@@ -72,7 +72,6 @@ cd "$WS"
 rm -rf "$WS/$BFS/libexec" "$WS/$BFS/share"
 
 # bash
-# dont redownload if alr exists
 if [ ! -f "$WS/$BU/bash-5.3" ]; then
 	echo "downloading Bash 5.3..."
 	mkdir -p "$WS/$BU"
