@@ -81,7 +81,10 @@ if [ ! -f "$WS/$BU/bash-5.3" ]; then
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
 	tar -xf "$WS/$BU/bash-5.3.tar.gz" -C "$WS/$BU"
 	cd "$WS/$BU/bash-5.3"
-	./configure --prefix="/usr" --bindir="/usr/bin"
+	./configure --prefix="/usr" \
+				--bindir="/usr/bin" \
+				--enable-static-link \
+				WITHOUT_CURSES=libtinfo
 	make -j$(nproc)
 fi
 cd "$WS/$BU/bash-5.3"
@@ -90,23 +93,27 @@ cd "$WS/$BFS/bin"
 ln -sf bash sh
 cd "$WS"
 
-# util linux
-if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
-	echo "downloading util-linux"
-	mkdir -p "$WS/$BU"
-	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
-	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
-	cd "$WS/$BU/util-linux-2.42.4"
-	./configure --prefix="/usr" \
-				--bindir="/usr/bin" \
-				--sbindir="/usr/sbin" \
-				--libdir="/usr/lib" \
-				--disable-makeinstall-chown \
-				--disable-makeinstall-setuid
-	make -j$(nproc)
-fi
-cd "$WS/$BU/util-linux-2.42.4"
-make install DESTDIR="$WS/$BFS"
+# util linux - will add support later
+#if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
+#	echo "downloading util-linux"
+#	mkdir -p "$WS/$BU"
+#	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
+#	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
+#	cd "$WS/$BU/util-linux-2.42.4"
+#	./configure --prefix="/usr" \
+#				--bindir="/usr/bin" \
+#				--sbindir="/usr/sbin" \
+#				--libdir="/usr/lib" \
+#				--disable-makeinstall-chown \
+#				--disable-makeinstall-setuid \
+#				--disable-cramfs \
+#				CC="gcc --sysroot=$WS/$BFS" \
+#				CFLAGS="-I$WS/$BFS/usr/include" \
+#				LDFLAGS="-L$WS/$BFS/usr/lib -Wl,-rpath-link,$WS/$BFS/usr/lib"
+#	make -j$(nproc)
+#fi
+#cd "$WS/$BU/util-linux-2.42.4"
+#make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 # compile src
@@ -216,14 +223,15 @@ mkdir -p "$WS/$BU/build-uefi"
 
 # grub for bios
 cd "$WS/$BU/build-bios"
-# using root dirs because DESTDIR will correct it
 ../grub-2.14/configure --prefix="/usr" \
 						--bindir="/usr/bin" \
 						--sbindir="/usr/sbin" \
 						--sysconfdir="/etc" \
 						--with-platform=pc \
 						--target=i386 \
-						--disable-werror
+						--disable-werror \
+						TARGET_LDFLAGS="-fuse-ld=bfd" \
+						ax_cv_check_ldflags___Wl___image_base_0x400000=no
 make -j$(nproc)
 make install DESTDIR="$WS/$BFS"
 
@@ -235,7 +243,8 @@ cd "$WS/$BU/build-uefi"
 						--sysconfdir="/etc" \
 						--with-platform=efi \
 						--target=x86_64 \
-						--disable-werror
+						--disable-werror \
+						TARGET_LDFLAGS="-fuse-ld=bfd"
 make -j$(nproc)
 make install DESTDIR="$WS/$BFS"
 
@@ -244,16 +253,16 @@ rm -rf "$WS/$BFS/usr/share/info"
 
 
 # make img ----
-read -p "Writing ISO, continue? [Y/n]: " continue
-case "$continue" in
-	[nN][oO]|[nN])
-		echo "Quit. Please note, build is incomplete. All components are inside basefs, excluding:"
-		echo "    * Linux | build/img/vmlinuz"
-		echo "    * GRUB cfg file | not written"
-		exit 1
-		;;
-	*)
-esac
+#read -p "Writing ISO, continue? [Y/n]: " continue
+#case "$continue" in
+#	[nN][oO]|[nN])
+#		echo "Quit. Please note, build is incomplete. All components are inside basefs, excluding:"
+#		echo "    * Linux | build/img/vmlinuz"
+#		echo "    * GRUB cfg file | not written"
+#		exit 1
+#		;;
+#	*)
+#esac
 
 mkdir -p "$WS/$BU/img/boot/grub"
 mkdir -p "$WS/$BU/iso"
@@ -264,8 +273,13 @@ cat << EOF > "$WS/$BU/img/boot/grub/grub.cfg"
 set timeout=5
 set default=0
 
+serial --unit=0 --speed=115200
+terminal_input serial
+terminal_output serial
+
 menuentry "Fern Live Media (RAM)" {
-	linux /vmlinuz root=/dev/ram0 rw init=/init
+	# lets us see kernel init logs
+	linux /vmlinuz root=/dev/ram0 rw init=/init console=ttyS0 Earlyprintk=serial,ttyS0,115200
 	initrd /initramfs.cpio.gz
 }
 EOF
@@ -276,21 +290,7 @@ cd "$WS/$BFS"
 find . -print0 | cpio --null -ov --format=newc | gzip -9 > "$WS/$BU/img/initramfs.cpio.gz"
 cd "$WS"
 
-echo "making eltorito img file"
-"$WS/$BFS/usr/bin/grub-mkimage" \
-	-d "$WS/$BFS/usr/lib/grub/i386-pc" \
-	-O i386-pc \
-	-o "$WS/$BU/img/boot/grub/eltorito.img" \
-	-p "/boot/grub" biosdisk iso9660 ext2 memdisk search test normal
-
-echo "building"
-xorriso -as mkisofs \
-	-iso-level 3 \
-	-full-iso9660-filenames \
-	-volid "FernOS_live" \
-	-eltorito-boot boot/grub/eltorito.img \
-	-no-emul-boot -boot-load-size 4 -boot-info-table \
-	-output "$WS/$BU/iso/fernos_live.iso" \
-	"$WS/$BU/img"
+echo "building iso"
+grub-mkrescue -o "$WS/$BU/iso/fernos_live.iso" "$WS/$BU/img"
 
 echo "finished"
