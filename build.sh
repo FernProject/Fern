@@ -208,30 +208,35 @@ mkdir -p "$WS/$BU"
 wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
 tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
 mkdir -p "$WS/$BFS/boot/grub"
-
-cd "$WS/$BU/grub-2.14"
+mkdir -p "$WS/$BU/build-bios"
+mkdir -p "$WS/$BU/build-uefi"
 
 # grub for bios
-./configure --prefix="$WS/$BFS" \
-			--bindir="$WS/$BFS/usr/bin" \
-			--sbindir="$WS/$BFS/usr/sbin" \
-			--libdir="$WS/$BFS/usr/lib" \
-			--sysconfdir="$WS/$BFS/etc" \
-			--with-platform=pc \
-			--target=i386 \
-			--disable-werror
+cd "$WS/$BU/build-bios"
+../grub-2.14/configure --prefix="$WS/$BFS" \
+						--bindir="$WS/$BFS/usr/bin" \
+						--sbindir="$WS/$BFS/usr/sbin" \
+						--libdir="$WS/$BFS/usr/lib" \
+						--sysconfdir="$WS/$BFS/etc" \
+						--with-platform=pc \
+						--target=i386 \
+						--disable-werror
 make -j$(nproc)
 make install DESTDIR="$WS/$BFS"
 
 # grub for uefi
-./configure --prefix="$WS/$BFS" \
-			--bindir="$WS/$BFS/usr/bin" \
-			--sbindir="$WS/$BFS/usr/sbin" \
-			--libdir="$WS/$BFS/usr/lib" \
-			--sysconfdir="$WS/$BFS/etc" \
-			--with-platform=efi \
-			--target=x86_64 \
-			--disable-werror
+cd "$WS/$BU/build-uefi"
+../grub-2.14/configure --prefix="$WS/$BFS" \
+						--bindir="$WS/$BFS/usr/bin" \
+						--sbindir="$WS/$BFS/usr/sbin" \
+						--libdir="$WS/$BFS/usr/lib" \
+						--sysconfdir="$WS/$BFS/etc" \
+						--with-platform=efi \
+						--target=x86_64 \
+						--disable-werror
+make -j$(nproc)
+make install DESTDIR="$WS/$BFS"
+
 cd "$WS"
 rm -rf "$WS/$BFS/usr/share/info"
 
