@@ -40,18 +40,18 @@ if [ ! -f "$WS/$BU/glibc-2.44" ]; then
 	tar -xf "$BU/glibc-2.44.tar.xz" -C "$WS/$BU"
 	cd "$WS/$BU/glibc-build"
 	
-	../glibc-2.44/configure --prefix="$WS/$BFS" \
-							--bindir="$WS/$BFS/usr/bin" \
-							--sbindir="$WS/$BFS/usr/sbin" \
-							--libdir="$WS/$BFS/usr/lib" \
-							--libexecdir="$WS/$BFS/usr/libexec" \
+	../glibc-2.44/configure --prefix="/usr" \
+							--bindir="/usr/bin" \
+							--sbindir="/usr/sbin" \
+							--libdir="/usr/lib" \
+							--libexecdir="/usr/libexec" \
 							--with-headers="$WS/$BFS/usr/include" \
-							lib_cv_slibdir="$WS/$BFS/usr/lib" \
-							lib_cv_rtlddir="$WS/$BFS/usr/lib"
+							lib_cv_slibdir="/usr/lib" \
+							lib_cv_rtlddir="/usr/lib"
 	make -j$(nproc)
 fi
 cd "$WS/$BU/glibc-build"
-make install
+make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 
@@ -63,17 +63,16 @@ if [ ! -f "$WS/$BU/coreutils-9.12" ]; then
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
 	tar -xf "$BU/coreutils-9.12.tar.xz" -C "$WS/$BU"
 	cd "$WS/$BU/coreutils-9.12"
-	./configure --prefix="$WS/$BFS" \
-				--bindir="$WS/$BFS/usr/bin" \
-				--sbindir="$WS/$BFS/usr/sbin" \
-				--libdir="$WS/$BFS/usr/lib" \
-				--libexecdir="$WS/$BFS/usr/libexec"
+	./configure --prefix="/usr" \
+				--bindir="/usr/bin" \
+				--sbindir="/usr/sbin" \
+				--libdir="/usr/lib" \
+				--libexecdir="/usr/libexec"
 	make -j$(nproc)
 fi
 cd "$WS/$BU/coreutils-9.12"
-make install
+make install DESTDIR="$WS/$BFS"
 cd "$WS"
-rm -rf "$WS/$BFS/libexec" "$WS/$BFS/share"
 
 # bash
 if [ ! -f "$WS/$BU/bash-5.3" ]; then
@@ -82,15 +81,14 @@ if [ ! -f "$WS/$BU/bash-5.3" ]; then
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
 	tar -xf "$WS/$BU/bash-5.3.tar.gz" -C "$WS/$BU"
 	cd "$WS/$BU/bash-5.3"
-	./configure --prefix="$WS/$BFS" --bindir="$WS/$BFS/usr/bin"
+	./configure --prefix="/usr" --bindir="/usr/bin"
 	make -j$(nproc)
 fi
 cd "$WS/$BU/bash-5.3"
-make install
+make install DESTDIR="$WS/$BFS"
 cd "$WS/$BFS/bin"
 ln -sf bash sh
 cd "$WS"
-rm -rf "$BFS/include" "$BFS/share"
 
 # util linux
 if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
@@ -99,16 +97,16 @@ if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
 	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
 	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
 	cd "$WS/$BU/util-linux-2.42.4"
-	./configure --prefix="$WS/$BFS" \
-				--bindir="$WS/$BFS/usr/bin" \
-				--sbindir="$WS/$BFS/usr/sbin" \
-				--libdir="$WS/$BFS/usr/lib" \
+	./configure --prefix="/usr" \
+				--bindir="/usr/bin" \
+				--sbindir="/usr/sbin" \
+				--libdir="/usr/lib" \
 				--disable-makeinstall-chown \
 				--disable-makeinstall-setuid
 	make -j$(nproc)
 fi
 cd "$WS/$BU/util-linux-2.42.4"
-make install
+make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 # compile src
