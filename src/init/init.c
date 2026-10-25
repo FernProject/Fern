@@ -56,7 +56,7 @@ int main() {
 	else if (pid == 0) {
 		// session leadership
 		setsid();
-		ioctl(0, TIOSCSTTY, 1);
+		ioctl(0, TIOCSCTTY, 1);
 
 		char* args[] = { sshell, NULL };
 		execv(args[0], args);
@@ -79,7 +79,7 @@ int main() {
 					pid = fork();
 					if (pid == 0) {
 						setsid();
-						ioctl(0, TIOSCSTTY, 1);
+						ioctl(0, TIOCSCTTY, 1);
 						char* args[] = { sshell, NULL };
 						execv(args[0], args);
 						exit(1);
