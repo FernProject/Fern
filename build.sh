@@ -19,11 +19,11 @@ BFS="basefs"
 BU="build"
 WS=$(pwd)
 
-echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
-exit 0
+#echo "Build is still in the process of being completed. Running now will not result in a finished system. Exiting..."
+#exit 0
 
 # copy base
-rm -rf "$BFS"
+rm -rf "$BFS" "$BU"
 cp -r "$B" "$BFS"
 find "$BFS" -type f -name ".gitkeep" -delete
 
@@ -196,11 +196,46 @@ export LOGNAME=$USER
 export HOME=/root
 EOF
 
-# need to make work for uefi and legacy
 # grub bootloader
-#if [ ! -f "$WS/$BU/grub-2.14" ]; then
-#	echo "downloading GRUB"
-#	mkdir -p "$WS/$BU"
-#	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
-#	tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
-#	mkdir -p "$WS/$BFS/boot/grub"
+echo "downloading GRUB"
+mkdir -p "$WS/$BU"
+wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
+tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
+mkdir -p "$WS/$BFS/boot/grub"
+
+cd "$WS/$BU/grub-2.14"
+
+# grub for bios
+./configure --prefix="$WS/$BFS" \
+			--bindir="$WS/$BFS/usr/bin" \
+			--sbindir="$WS/$BFS/usr/sbin" \
+			--libdir="$WS/$BFS/usr/lib" \
+			--sysconfdir="$WS/$BFS/etc" \
+			--with-platform=pc \
+			--target=i386 \
+			--disable-werror
+make -j$(nproc)
+make install DESTDIR="$WS/$BFS"
+
+# grub for uefi
+./configure --prefix="$WS/$BFS" \
+			--bindir="$WS/$BFS/usr/bin" \
+			--sbindir="$WS/$BFS/usr/sbin" \
+			--libdir="$WS/$BFS/usr/lib" \
+			--sysconfdir="$WS/$BFS/etc" \
+			--with-platform=efi \
+			--target=x86_64 \
+			--disable-werror
+cd "$WS"
+rm -rf "$WS/$BFS/usr/share/info"
+
+# write conf file
+cat << EOF > "$WS/$BFS/boot/grub/grub.cfg"
+# Hi!
+set timeout=5
+set default=0
+
+menuentry "Fern Live Media" {
+	linux /boot/vmlinuz root=/dev/ram0 rw init=/init
+}
+EOF
