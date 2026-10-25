@@ -46,8 +46,9 @@ In order to build the ISO, you must have the following on your host machine:
 * nproc
 * dosfstools
 * mtools
+* grub-mkrescue
 
-Alternatively, you can download the latest ISO from the [release page](https://github.com/FernProject/Fern/releases) (if available).
+Alternatively, you can download the latest ISO from the [release page](https://github.com/FernProject/Fern/releases).
 
 ## Building
 
@@ -69,7 +70,7 @@ chmod +x build.sh
 
 Once this process is finished, the script will pause, to ask you this:
 
-``Make live ISO? [Y/n]``
+``Writing ISO, continue? [Y/n]``
 
 Please note, typing `n`  or `no` will stop the script, and you will have to run the whole process again (wiping and recompiling your build) to make your ISO (or just do it manually).
 
