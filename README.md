@@ -47,6 +47,7 @@ In order to build the ISO, you must have the following on your host machine:
 * dosfstools
 * mtools
 * grub-mkrescue
+* gcc
 
 Alternatively, you can download the latest ISO from the [release page](https://github.com/FernProject/Fern/releases).
 
