@@ -14,17 +14,6 @@
 #include "additional.h"
 
 int main() {
-	// terminal file descriptors
-	int fd = open("/dev/console", O_RDWR);
-	if (fd >= 0) {
-		dup2(fd, 0); // stdin
-		dup2(fd, 1); // stdout
-		dup2(fd, 2); // stderr
-		if (fd > 2) close(fd);
-	}
-
-	printf("\n"INITP "Hello!\n");
-
 	// mount fs
 	printf(INITP "Mounting filesystems...\n");
 	if (mount("none", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) < 0) perror(ERRP "Couldn't mount /proc");
@@ -38,6 +27,17 @@ int main() {
 	if (stat("/sys/firmware/efi/efivars", &efi_stat) == 0) {
 		if (mount( "none", "/sys/firmware/efi/efivarfs", "efivarfs", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) < 0) perror(ERRP "Couldn't mount efivarfs");
 	}
+
+	// terminal file descriptors
+	int fd = open("/dev/console", O_RDWR);
+	if (fd >= 0) {
+		dup2(fd, 0); // stdin
+		dup2(fd, 1); // stdout
+		dup2(fd, 2); // stderr
+		if (fd > 2) close(fd);
+	}
+
+	printf("\n"INITP "Hello!\n");
 
 	// chosen shell /bin/sh if no conf file
 	char sshell[pathmax] = "/bin/sh";
