@@ -33,7 +33,7 @@ cd "$WS"
 
 # glibc
 if [ ! -f "$WS/$BU/glibc-2.44" ]; then
-	echo "downloading Glibc..."
+	echo "Downloading Glibc..."
 	mkdir -p "$WS/$BU"
 	mkdir -p "$WS/$BU/glibc-build" # mk separate build dir
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/glibc/glibc-2.44.tar.xz
@@ -58,7 +58,7 @@ cd "$WS"
 
 # coreutils
 if [ ! -f "$WS/$BU/coreutils-9.12" ]; then
-	echo "downloading Coreutils..."
+	echo "Downloading Coreutils..."
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
 	tar -xf "$BU/coreutils-9.12.tar.xz" -C "$WS/$BU"
@@ -76,7 +76,7 @@ cd "$WS"
 
 # bash
 if [ ! -f "$WS/$BU/bash-5.3" ]; then
-	echo "downloading Bash 5.3..."
+	echo "Downloading Bash 5.3..."
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
 	tar -xf "$WS/$BU/bash-5.3.tar.gz" -C "$WS/$BU"
@@ -95,7 +95,7 @@ cd "$WS"
 
 # util linux - will add support later
 #if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
-#	echo "downloading util-linux"
+#	echo "Downloading util-linux"
 #	mkdir -p "$WS/$BU"
 #	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
 #	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
@@ -117,7 +117,7 @@ cd "$WS"
 cd "$WS"
 
 # compile src
-echo "compiling src/*"
+echo "Compiling src/*"
 cd "$WS"
 make src
 
@@ -131,7 +131,7 @@ cp "$WS/$BU/linux-7.2.12/arch/x86/boot/bzImage" "$WS/$BU/img/vmlinuz" # install 
 
 
 # init
-echo "compiling init"
+echo "Compiling init"
 cd "$WS"
 make init
 cat << EOF > "$BFS/etc/init.conf"
@@ -214,7 +214,7 @@ EOF
 
 # tbh i found the whole grub part confusing with initramfs - probably isnt perfect
 # grub bootloader
-echo "downloading GRUB"
+echo "Downloading GRUB"
 mkdir -p "$WS/$BU"
 wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/grub/grub-2.14.tar.xz
 tar -xf "$WS/$BU/grub-2.14.tar.xz" -C "$WS/$BU"
@@ -285,12 +285,12 @@ menuentry "Fern Live Media (RAM)" {
 EOF
 
 # basefs -> initramfs
-echo "making initramfs"
+echo "Making initramfs"
 cd "$WS/$BFS"
 find . -print0 | cpio --null -ov --format=newc | gzip -9 > "$WS/$BU/img/initramfs.cpio.gz"
 cd "$WS"
 
-echo "building iso"
+echo "Building ISO"
 grub-mkrescue -o "$WS/$BU/iso/fernos_live.iso" "$WS/$BU/img"
 
-echo "finished"
+echo "Finished"
