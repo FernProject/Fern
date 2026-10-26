@@ -1,5 +1,3 @@
-# IN PROCESS OF COMPLETING!
-
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g -std=c11
 B = base
@@ -13,11 +11,8 @@ make:
 	@echo "Running any targets inside of this file outside of the automated build script will break your build!"
 	@echo "INSTEAD, run \`./build.sh\`"
 
-# DO NOT USE THIS TARGET
-copy:
-	cp -r $(B) $(BFS)
-	find $(BFS) -type f -name ".gitkeep" -delete
-	cd $(BFS)/bin && ln -sf bash sh
+geninitcpio:
+	$(CC) $(CFLAGS) build/linux-7.2.12/usr/gen_init_cpio.c -o build/gen_init_cpio
 
 init:
 	$(CC) $(CFLAGS) -c src/init/init.c -o src/init/init.o
