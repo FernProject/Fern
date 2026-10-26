@@ -252,7 +252,7 @@ cd "$WS"
 rm -rf "$WS/$BFS/usr/share/info"
 
 
- make img ----
+# make img ----
 read -p "Writing ISO, continue? [Y/n]: " continue
 case "$continue" in
 	[nN][oO]|[nN])
