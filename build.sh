@@ -30,8 +30,6 @@ cd "$WS/$BU/linux-7.2.12"
 make mrproper
 make INSTALL_HDR_PATH="$WS/$BFS/usr" headers_install
 cd "$WS"
-echo "compiling gen_init_cpio"
-make geninitcpio
 
 # glibc
 if [ ! -f "$WS/$BU/glibc-2.44" ]; then

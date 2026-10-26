@@ -11,9 +11,6 @@ make:
 	@echo "Running any targets inside of this file outside of the automated build script will break your build!"
 	@echo "INSTEAD, run \`./build.sh\`"
 
-geninitcpio:
-	$(CC) $(CFLAGS) build/linux-7.2.12/usr/gen_init_cpio.c -o build/gen_init_cpio
-
 init:
 	$(CC) $(CFLAGS) -c src/init/init.c -o src/init/init.o
 	$(CC) $(CFLAGS) -c src/init/additional.c -o src/init/additional.o
