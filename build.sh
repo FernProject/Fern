@@ -252,17 +252,17 @@ cd "$WS"
 rm -rf "$WS/$BFS/usr/share/info"
 
 
-# make img ----
-#read -p "Writing ISO, continue? [Y/n]: " continue
-#case "$continue" in
-#	[nN][oO]|[nN])
-#		echo "Quit. Please note, build is incomplete. All components are inside basefs, excluding:"
-#		echo "    * Linux | build/img/vmlinuz"
-#		echo "    * GRUB cfg file | not written"
-#		exit 1
-#		;;
-#	*)
-#esac
+ make img ----
+read -p "Writing ISO, continue? [Y/n]: " continue
+case "$continue" in
+	[nN][oO]|[nN])
+		echo "Quit. Please note, build is incomplete. All components are inside basefs, excluding:"
+		echo "    * Linux | build/img/vmlinuz"
+		echo "    * GRUB cfg file | not written"
+		exit 1
+		;;
+	*)
+esac
 
 mkdir -p "$WS/$BU/img/boot/grub"
 mkdir -p "$WS/$BU/iso"
