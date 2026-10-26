@@ -37,18 +37,12 @@ int main() {
 		if (fd > 2) close(fd);
 	}
 
-	printf("\n"INITP "Hello!\n");
-
 	// chosen shell /bin/sh if no conf file
 	char sshell[pathmax] = "/bin/sh";
 	rconf(sshell); // fetch chosen shell
 
-	printf(INITP "Found shell: %s\n", sshell);
 
-
-
-	// run bash - or whichever shell u want
-	printf(INITP "Starting shell...\n");
+	// run shell
 	printf("\n" INITP "Welcome to Fern!\n");
 
 	pid_t pid = fork();
@@ -60,7 +54,7 @@ int main() {
 		ioctl(0, TIOCSCTTY, 1);
 
 		char* args[] = { sshell, NULL };
-		execv(args[0], args);
+		execv(sshell, args);
 
 		// cant start shell
 		perror(ERRP "Couldn't launch shell");
@@ -76,13 +70,13 @@ int main() {
 			if (dead_child > 0) {
 				// if main shell crashes: clone
 				if (dead_child == pid) {
-					printf(ERRP "Shell crashed! :( ... Respawning %s...\n", sshell);
+					printf(ERRP "%s crashed. Restarting...\n", sshell);
 					pid = fork();
 					if (pid == 0) {
 						setsid();
 						ioctl(0, TIOCSCTTY, 1);
 						char* args[] = { sshell, NULL };
-						execv(args[0], args);
+						execv(sshell, args);
 						exit(1);
 					}
 				}
