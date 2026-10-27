@@ -1,5 +1,5 @@
-// This init system was thrown together in an hour, it should NOT be used on a daily driver, please do not use this on your full installation.
-// A seperate, more complete init system is provided in ferninstall.
+// This init system should NOT be used on a daily driver, please do not use this on your full installation.
+// A seperate, more complete init system will be provided in ferninstall.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +10,6 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-
-#include "additional.h"
 
 int main() {
 	// mount fs
@@ -37,27 +35,21 @@ int main() {
 		if (fd > 2) close(fd);
 	}
 
-	// chosen shell /bin/sh if no conf file
-	char sshell[pathmax] = "/bin/sh";
-	rconf(sshell); // fetch chosen shell
-
+	printf(INITP "Hello!\n");
 
 	// run shell
-	printf("\n" INITP "Welcome to Fern!\n");
-
 	pid_t pid = fork();
 
-	if (pid < 0) perror(ERRP "Couldn't fork shell");
+	if (pid < 0) perror(ERRP "Couldn't fork");
 	else if (pid == 0) {
 		// session leadership
 		setsid();
 		ioctl(0, TIOCSCTTY, 1);
 
-		char* args[] = { sshell, NULL };
-		execv(sshell, args);
+		char* args[] = { "/sbin/agetty", "-8", "115200", "ttyS0", NULL };
+		execv(args[0], args);
 
-		// cant start shell
-		perror(ERRP "Couldn't launch shell");
+		perror(ERRP "Couldn't launch agetty");
 		exit(1);
 	}
 	
@@ -68,15 +60,13 @@ int main() {
 			pid_t dead_child = waitpid(-1, &status, 0);
 
 			if (dead_child > 0) {
-				// if main shell crashes: clone
-				if (dead_child == pid) {
-					printf(ERRP "%s crashed. Restarting...\n", sshell);
+				if (dead_child == pid) { // session ended
 					pid = fork();
 					if (pid == 0) {
 						setsid();
 						ioctl(0, TIOCSCTTY, 1);
-						char* args[] = { sshell, NULL };
-						execv(sshell, args);
+						char* args[] = { "/sbin/agetty", "-8", "115200", "ttyS0", NULL };
+						execv(args[0], args);
 						exit(1);
 					}
 				}

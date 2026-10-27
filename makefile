@@ -12,9 +12,7 @@ make:
 	@echo "INSTEAD, run \`./build.sh\`"
 
 init:
-	$(CC) $(CFLAGS) -c src/init/init.c -o src/init/init.o
-	$(CC) $(CFLAGS) -c src/init/additional.c -o src/init/additional.o
-	$(CC) $(CFLAGS) src/init/init.o src/init/additional.o -o $(BFS)/init
+	$(CC) $(CFLAGS) src/init/init.c -o $(BFS)/init
 
 src:
 	$(CC) $(CFLAGS) src/ferninstall/ferninstall.c -o $(BFS)/bin/ferninstall
