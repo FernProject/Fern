@@ -24,7 +24,7 @@ mkdir -p "$WS/$BFS/home/$USER"
 
 
 # kernel headers
-if [ ! -f "$WS/$BU/linux-7.2.12" ]; then
+if [ ! -d "$WS/$BU/linux-7.2.12" ]; then
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.12.tar.xz
 	tar -xf "$WS/$BU/linux-7.2.12.tar.xz" -C "$WS/$BU"
@@ -35,7 +35,7 @@ make INSTALL_HDR_PATH="$WS/$BFS/usr" headers_install
 cd "$WS"
 
 # glibc
-if [ ! -f "$WS/$BU/glibc-2.44" ]; then
+if [ ! -d "$WS/$BU/glibc-2.44" ]; then
 	echo "Downloading Glibc..."
 	mkdir -p "$WS/$BU"
 	mkdir -p "$WS/$BU/glibc-build" # mk separate build dir
@@ -58,16 +58,16 @@ make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 # rm absolute paths from libc.so & libpthread.so so util-linux can use
-if [ -f "$WS/$BFS/usr/lib/libc.so" ]; then
+if [ -d "$WS/$BFS/usr/lib/libc.so" ]; then
 	sed -i 's|/usr/lib/||g' "$WS/$BFS/usr/lib/libc.so"
 fi
-if [ -f "$WS/$BFS/usr/lib/libpthread.so" ]; then
+if [ -d "$WS/$BFS/usr/lib/libpthread.so" ]; then
 	sed -i 's|/usr/lib/||g' "$WS/$BFS/usr/lib/libpthread.so"
 fi
 
 
 # coreutils
-if [ ! -f "$WS/$BU/coreutils-9.12" ]; then
+if [ ! -d "$WS/$BU/coreutils-9.12" ]; then
 	echo "Downloading Coreutils..."
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.xz
@@ -85,7 +85,7 @@ make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 # bash
-if [ ! -f "$WS/$BU/bash-5.3" ]; then
+if [ ! -d "$WS/$BU/bash-5.3" ]; then
 	echo "Downloading Bash 5.3..."
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz
@@ -103,7 +103,7 @@ ln -sf bash sh
 cd "$WS"
 
 # linux pam
-if [ ! -f "$WS/$BU/Linux-PAM-1.7.3" ]; then
+if [ ! -d "$WS/$BU/Linux-PAM-1.7.3" ]; then
 	echo "Downloading Linux-PAM..."
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://github.com/linux-pam/linux-pam/releases/download/v1.7.3/Linux-PAM-1.7.3.tar.xz
@@ -127,7 +127,7 @@ chmod 4755 "$WS/$BFS/usr/sbin/unix_chkpwd"
 cd "$WS"
 
 # util linux
-if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
+if [ ! -d "$WS/$BU/util-linux-2.42.4" ]; then
 	echo "Downloading util-linux"
 	mkdir -p "$WS/$BU"
 	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
