@@ -1,7 +1,7 @@
 # FernOS
 
 > [!IMPORTANT]
-> READ THE [DOCS](docs/README.md)
+> **The `build.sh` script currently works, but login on boot is broken.**
 
 > [!NOTE]
 > Fern started just a couple of days ago, please don't expect usability for a while.<br>The installer won't be out for a while.
@@ -20,7 +20,7 @@ Fern is a standalone GNU/Linux distribution; made because others pissed me off. 
 
 ## Disclaimer
 
-Fern has been in development for only a few days, it won't be usable for a few weeks. I also have school, so development may be slower than mainstream distros, unless users make pull requests.
+Fern has been in development for only a few days, it won't be usable for a few weeks. I also have school, so development may be slower than mainstream distros, unless people contribute. I've also thrown myself in at the deep end; I've never made anything like this before, so I'm not super experienced. I'm also not following any guides like LFS so I'm just doing this blind.
 
 ## Why Fern?
 
