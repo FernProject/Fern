@@ -11,13 +11,16 @@ BU="build"
 WS=$(pwd)
 
 # copy base
-rm -rf "$BFS" "$BU"
-cp -r "$B" "$BFS"
-find "$BFS" -type f -name ".gitkeep" -delete
+if [ ! -d "$BFS" ]; then
+	cp -r "$B" "$BFS"
+	find "$BFS" -type f -name ".gitkeep" -delete
+fi
 
 
 # make iso build dir for later
 mkdir -p "$WS/$BU/img"
+
+mkdir -p "$WS/$BFS/home/$USER"
 
 
 # kernel headers
@@ -37,7 +40,7 @@ if [ ! -f "$WS/$BU/glibc-2.44" ]; then
 	mkdir -p "$WS/$BU"
 	mkdir -p "$WS/$BU/glibc-build" # mk separate build dir
 	wget -nc -P "$WS/$BU" https://ftp.gnu.org/gnu/glibc/glibc-2.44.tar.xz
-	tar -xf "$BU/glibc-2.44.tar.xz" -C "$WS/$BU"
+	tar -xf "$WS/$BU/glibc-2.44.tar.xz" -C "$WS/$BU"
 	cd "$WS/$BU/glibc-build"
 	
 	../glibc-2.44/configure --prefix="/usr" \
@@ -54,6 +57,13 @@ cd "$WS/$BU/glibc-build"
 make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
+# rm absolute paths from libc.so & libpthread.so so util-linux can use
+if [ -f "$WS/$BFS/usr/lib/libc.so" ]; then
+	sed -i 's|/usr/lib/||g' "$WS/$BFS/usr/lib/libc.so"
+fi
+if [ -f "$WS/$BFS/usr/lib/libpthread.so" ]; then
+	sed -i 's|/usr/lib/||g' "$WS/$BFS/usr/lib/libpthread.so"
+fi
 
 
 # coreutils
@@ -83,8 +93,7 @@ if [ ! -f "$WS/$BU/bash-5.3" ]; then
 	cd "$WS/$BU/bash-5.3"
 	./configure --prefix="/usr" \
 				--bindir="/usr/bin" \
-				--enable-static-link \
-				WITHOUT_CURSES=libtinfo
+				--enable-static-link
 	make -j$(nproc)
 fi
 cd "$WS/$BU/bash-5.3"
@@ -93,27 +102,53 @@ cd "$WS/$BFS/bin"
 ln -sf bash sh
 cd "$WS"
 
-# util linux - will add support later
-#if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
-#	echo "Downloading util-linux"
-#	mkdir -p "$WS/$BU"
-#	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
-#	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
-#	cd "$WS/$BU/util-linux-2.42.4"
-#	./configure --prefix="/usr" \
-#				--bindir="/usr/bin" \
-#				--sbindir="/usr/sbin" \
-#				--libdir="/usr/lib" \
-#				--disable-makeinstall-chown \
-#				--disable-makeinstall-setuid \
-#				--disable-cramfs \
-#				CC="gcc --sysroot=$WS/$BFS" \
-#				CFLAGS="-I$WS/$BFS/usr/include" \
-#				LDFLAGS="-L$WS/$BFS/usr/lib -Wl,-rpath-link,$WS/$BFS/usr/lib"
-#	make -j$(nproc)
-#fi
-#cd "$WS/$BU/util-linux-2.42.4"
-#make install DESTDIR="$WS/$BFS"
+# linux pam
+if [ ! -f "$WS/$BU/Linux-PAM-1.7.3" ]; then
+	echo "Downloading Linux-PAM..."
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://github.com/linux-pam/linux-pam/releases/download/v1.7.3/Linux-PAM-1.7.3.tar.xz
+	tar -xf "$WS/$BU/Linux-PAM-1.7.3.tar.xz" -C "$WS/$BU"
+	cd "$WS/$BU/Linux-PAM-1.7.3"
+	
+	meson setup build \
+		--prefix="/usr" \
+		--libdir="/usr/lib" \
+		--sysconfdir="/etc" \
+		--buildtype=release \
+		-D securedir="/usr/lib/security" \
+		-D docs=disabled \
+		-D nis=disabled \
+		-D selinux=disabled
+	ninja -C build
+fi
+cd "$WS/$BU/Linux-PAM-1.7.3"
+DESTDIR="$WS/$BFS" ninja -C build install
+chmod 4755 "$WS/$BFS/usr/sbin/unix_chkpwd"
+cd "$WS"
+
+# util linux
+if [ ! -f "$WS/$BU/util-linux-2.42.4" ]; then
+	echo "Downloading util-linux"
+	mkdir -p "$WS/$BU"
+	wget -nc -P "$WS/$BU" https://www.kernel.org/pub/linux/utils/util-linux/v2.42/util-linux-2.42.4.tar.xz
+	tar -xf "$WS/$BU/util-linux-2.42.4.tar.xz" -C "$WS/$BU"
+	cd "$WS/$BU/util-linux-2.42.4"
+	./configure --prefix="/usr" \
+				--bindir="/usr/bin" \
+				--sbindir="/usr/sbin" \
+				--libdir="/usr/lib" \
+				--disable-makeinstall-chown \
+				--disable-makeinstall-setuid \
+				--disable-use-tty-group \
+				--disable-cramfs \
+				WITHOUT_LIBSYSTEMD=1 \
+				CC="gcc" \
+				CFLAGS="-I$WS/$BFS/usr/include" \
+				LDFLAGS="-L$WS/$BFS/usr/lib -Wl,-rpath-link,$WS/$BFS/usr/lib"
+	make -j$(nproc)
+fi
+cd "$WS/$BU/util-linux-2.42.4"
+make install DESTDIR="$WS/$BFS"
 cd "$WS"
 
 # compile src
@@ -145,7 +180,21 @@ SHELL=/bin/bash # installed with Fern
 # SHELL=/bin/zsh
 EOF
 
+# pam conf files
+mkdir -p "$WS/$BFS/etc/pam.d"
+cat << EOF > "$WS/$BFS/etc/pam.d/other"
+auth        required    pam_deny.so
+account     required    pam_deny.so
+password    required    pam_deny.so
+session     required    pam_deny.so
+EOF
 
+cat << EOF > "$WS/$BFS/etc/pam.d/login"
+auth        required    pam_unix.so nullok
+account     required    pam_unix.so
+session     required    pam_unix.so
+password    required    pam_unix.so sha512 shadow
+EOF
 
 # etc
 echo "Writing /etc files"
@@ -174,6 +223,23 @@ sys:x:3:
 tty:x:5:
 nobody:x:65534
 EOF
+
+echo "/etc/nsswitch.conf"
+cat << EOF > "$WS/$BFS/etc/nsswitch.conf"
+# 67
+passwd:		files
+group:		files
+shadow:		files
+hosts:		files dns
+networks:	files
+protocols:	files
+services:	files
+EOF
+
+# nsswitch files
+cp -d "$WS/$BU/glibc-build/nss/libnss_files.so"* "$WS/$BFS/usr/lib"
+cp -d "$WS/$BU/glibc-build/resolv/libnss_dns.so"* "$WS/$BFS/usr/lib"
+
 
 echo "/etc/fstab"
 cat << EOF > "$WS/$BFS/etc/fstab"
@@ -287,7 +353,7 @@ EOF
 # basefs -> initramfs
 echo "Making initramfs"
 cd "$WS/$BFS"
-find . -print0 | cpio --null -ov --format=newc | gzip -9 > "$WS/$BU/img/initramfs.cpio.gz"
+find . -print0 | cpio --null -ov --format=newc --owner=0:0 | gzip -9 > "$WS/$BU/img/initramfs.cpio.gz"
 cd "$WS"
 
 echo "Building ISO"
