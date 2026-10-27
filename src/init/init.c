@@ -11,6 +11,9 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
+#define INITP "[ INIT ] "
+#define ERRP "[\e[1;31m ERR \e[0m] "
+
 int main() {
 	// mount fs
 	printf(INITP "Mounting filesystems...\n");
